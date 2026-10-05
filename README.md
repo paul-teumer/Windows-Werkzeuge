@@ -5,6 +5,11 @@ Zwei kleine, eigenständige Werkzeuge für Windows mit einheitlicher Oberfläche
 - **Ordnergrößen** – zeigt, welche Dateien und Unterordner den meisten Speicher belegen.
 - **Maustasten** – vertauscht primäre und sekundäre Maustaste, per Fenster oder Kommandozeile.
 
+**Direkter Download** (speichern und per Doppelklick starten, keine Installation nötig):
+
+- **[⬇ Ordnergroessen.exe](https://github.com/paul-teumer/Windows-Werkzeuge/releases/latest/download/Ordnergroessen.exe)**
+- **[⬇ Maustasten.exe](https://github.com/paul-teumer/Windows-Werkzeuge/releases/latest/download/Maustasten.exe)**
+
 ![Ordnergrößen](docs/ordnergroessen-dunkel.png)
 
 ## Voraussetzungen
