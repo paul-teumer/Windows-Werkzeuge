@@ -199,6 +199,10 @@ def configure_styles(root: tk.Misc, palette: dict[str, str]) -> None:
         lightcolor=palette["track"],
         darkcolor=palette["track"],
     )
+    style.map(
+        "Vertical.TScrollbar",
+        background=[("active", palette["muted"]), ("!active", palette["track"])],
+    )
     style.configure(
         "TProgressbar",
         background=palette["accent"],
