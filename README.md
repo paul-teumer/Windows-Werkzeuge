@@ -9,7 +9,9 @@ Zwei kleine, eigenständige Werkzeuge für Windows mit einheitlicher Oberfläche
 
 ## Voraussetzungen
 
-Windows 10/11 und Python 3.10 oder neuer (nur Standardbibliothek).
+**Ohne Installation:** `Ordnergroessen.exe` und `Maustasten.exe` aus den [Releases](https://github.com/Pal-Tomer/Windows-Werkzeuge/releases) laden und starten – weder Python noch weitere Pakete sind nötig. Die Kommandozeilen-Schalter der Maustasten gelten ebenso für die `.exe`.
+
+**Aus dem Quelltext:** Windows 10/11 und Python 3.10 oder neuer (nur Standardbibliothek).
 
 ```
 git clone https://github.com/Pal-Tomer/Windows-Werkzeuge.git
@@ -52,6 +54,7 @@ Die Umstellung erfolgt über die Windows-Schnittstelle `SystemParametersInfo`; s
 
 ```
 python -m unittest discover -s tests -t .
+python erstellen.py   # baut die beiden .exe-Dateien (benötigt PyInstaller)
 ```
 
 ## Lizenz
