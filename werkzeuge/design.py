@@ -58,7 +58,12 @@ def system_prefers_dark() -> bool:
 
 
 def darken_title_bar(window: tk.Misc) -> None:
-    """Dunkle Titelleiste (Windows 10 ab 20H1 und Windows 11); erzwingt das Neuzeichnen des Rahmens."""
+    """Dunkle Titelleiste (Windows 10 ab 20H1 und Windows 11); wird nach dem ersten Anzeigen des Fensters erneut gesetzt."""
+    _apply_dark_title_bar(window)
+    window.after(200, lambda: _apply_dark_title_bar(window))
+
+
+def _apply_dark_title_bar(window: tk.Misc) -> None:
     try:
         window.update_idletasks()
         user32, dwmapi = ctypes.windll.user32, ctypes.windll.dwmapi
@@ -67,8 +72,6 @@ def darken_title_bar(window: tk.Misc) -> None:
         for attribute in (20, 19):
             if dwmapi.DwmSetWindowAttribute(handle, attribute, enabled, 4) == 0:
                 break
-        flags = 0x0001 | 0x0002 | 0x0004 | 0x0020  # NOSIZE | NOMOVE | NOZORDER | FRAMECHANGED
-        user32.SetWindowPos(handle, 0, 0, 0, 0, 0, flags)
     except (AttributeError, OSError):
         pass
 
