@@ -7,8 +7,8 @@ Zwei kleine, eigenständige Werkzeuge für Windows mit einheitlicher Oberfläche
 
 **Direkter Download** (speichern und per Doppelklick starten, keine Installation nötig):
 
-- **[⬇ Ordnergroessen.exe](https://github.com/paul-teumer/Windows-Werkzeuge/releases/latest/download/Ordnergroessen.exe)**
-- **[⬇ Maustasten.exe](https://github.com/paul-teumer/Windows-Werkzeuge/releases/latest/download/Maustasten.exe)**
+- **[Ordnergrößen herunterladen](https://github.com/paul-teumer/Windows-Werkzeuge/releases/latest/download/Ordnergroessen.exe)**
+- **[Maustasten herunterladen](https://github.com/paul-teumer/Windows-Werkzeuge/releases/latest/download/Maustasten.exe)**
 
 ![Ordnergrößen](docs/ordnergroessen-dunkel.png)
 
