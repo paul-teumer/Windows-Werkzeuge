@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import ctypes
 import math
 import tkinter as tk
 from tkinter import ttk
@@ -54,6 +55,22 @@ def system_prefers_dark() -> bool:
             return winreg.QueryValueEx(key, "AppsUseLightTheme")[0] == 0
     except OSError:
         return False
+
+
+def darken_title_bar(window: tk.Misc) -> None:
+    """Dunkle Titelleiste (Windows 10 ab 20H1 und Windows 11); erzwingt das Neuzeichnen des Rahmens."""
+    try:
+        window.update_idletasks()
+        user32, dwmapi = ctypes.windll.user32, ctypes.windll.dwmapi
+        handle = user32.GetParent(window.winfo_id()) or window.winfo_id()
+        enabled = ctypes.byref(ctypes.c_int(1))
+        for attribute in (20, 19):
+            if dwmapi.DwmSetWindowAttribute(handle, attribute, enabled, 4) == 0:
+                break
+        flags = 0x0001 | 0x0002 | 0x0004 | 0x0020  # NOSIZE | NOMOVE | NOZORDER | FRAMECHANGED
+        user32.SetWindowPos(handle, 0, 0, 0, 0, 0, flags)
+    except (AttributeError, OSError):
+        pass
 
 
 def font(size: int = 10, weight: str = "normal") -> tuple[str, int, str]:

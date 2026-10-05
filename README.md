@@ -9,12 +9,12 @@ Zwei kleine, eigenständige Werkzeuge für Windows mit einheitlicher Oberfläche
 
 ## Voraussetzungen
 
-**Ohne Installation:** `Ordnergroessen.exe` und `Maustasten.exe` aus den [Releases](https://github.com/Pal-Tomer/Windows-Werkzeuge/releases) laden und starten – weder Python noch weitere Pakete sind nötig. Die Kommandozeilen-Schalter der Maustasten gelten ebenso für die `.exe`.
+**Ohne Installation:** `Ordnergroessen.exe` und `Maustasten.exe` aus den [Releases](https://github.com/paul-teumer/Windows-Werkzeuge/releases) laden und starten – weder Python noch weitere Pakete sind nötig. Die Kommandozeilen-Schalter der Maustasten gelten ebenso für die `.exe`.
 
 **Aus dem Quelltext:** Windows 10/11 und Python 3.10 oder neuer (nur Standardbibliothek).
 
 ```
-git clone https://github.com/Pal-Tomer/Windows-Werkzeuge.git
+git clone https://github.com/paul-teumer/Windows-Werkzeuge.git
 cd Windows-Werkzeuge
 ```
 
@@ -33,17 +33,24 @@ pythonw ordnergroessen.pyw
 
 ## Maustasten
 
+Windows 11 bietet keine bequeme Möglichkeit mehr, die Maustasten zu vertauschen – erst recht nicht, wenn zwei Mäuse im Wechsel von einer rechts- und einer linkshändigen Person benutzt werden. Dieses Werkzeug schaltet in einem Schritt um. Die Einstellung gilt systemweit für alle angeschlossenen Mäuse.
+
 ```
 pythonw maustasten_tausch.pyw
 ```
 
-Ohne Fenster, etwa für ein Tastenkürzel oder eine Verknüpfung:
+Schnellzugriff ohne Fenster:
+
+- **Tastenkürzel Strg+Alt+M** und Symbol im Infobereich der Taskleiste (Klick schaltet um, Rechtsklick öffnet das Menü). Das Symbol zeigt die aktuell primäre Taste; der Hintergrundbetrieb lässt sich im Fenster einschalten und startet dann mit Windows.
+- **Desktop-Verknüpfung**, die per Doppelklick umschaltet; im Fenster per Knopf angelegt.
+- Kommandozeile:
 
 ```
-python -m werkzeuge.maustasten --wechseln   # Zustand umschalten
-python -m werkzeuge.maustasten --links      # linke Taste primär
-python -m werkzeuge.maustasten --rechts     # rechte Taste primär
+python -m werkzeuge.maustasten --wechseln     # Zustand umschalten
+python -m werkzeuge.maustasten --links        # linke Taste primär
+python -m werkzeuge.maustasten --rechts       # rechte Taste primär
 python -m werkzeuge.maustasten --status
+python -m werkzeuge.maustasten --hintergrund  # Symbol und Tastenkürzel ohne Fenster
 ```
 
 Die Umstellung erfolgt über die Windows-Schnittstelle `SystemParametersInfo`; sie wirkt sofort, ohne Registry-Eingriff und ohne Neuanmeldung, und bleibt dauerhaft erhalten.
@@ -59,4 +66,4 @@ python erstellen.py   # baut die beiden .exe-Dateien (benötigt PyInstaller)
 
 ## Lizenz
 
-MIT, siehe [LICENSE](LICENSE).
+Copyright © 2026 Paul Teumer. Lizenziert unter der [GNU General Public License v3.0](LICENSE).

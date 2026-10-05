@@ -2,7 +2,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from werkzeuge import maustasten, ordnergroessen
+from werkzeuge import maus, ordnergroessen
 
 
 class FormatSizeTest(unittest.TestCase):
@@ -34,11 +34,11 @@ class ScanTest(unittest.TestCase):
 
 class MouseTest(unittest.TestCase):
     def test_state_text(self):
-        self.assertEqual(maustasten.describe(True), "Rechts")
-        self.assertEqual(maustasten.describe(False), "Links")
+        self.assertEqual(maus.describe(True), "Rechts")
+        self.assertEqual(maus.describe(False), "Links")
 
     def test_current_state_is_readable(self):
-        self.assertIsInstance(maustasten.is_swapped(), bool)
+        self.assertIsInstance(maus.is_swapped(), bool)
 
 
 if __name__ == "__main__":

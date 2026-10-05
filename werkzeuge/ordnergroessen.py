@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from .design import DARK, LIGHT, Button, Card, configure_styles, font, label, system_prefers_dark
+from .design import DARK, LIGHT, Button, Card, configure_styles, darken_title_bar, font, label, system_prefers_dark
 
 UNITS = ("B", "KB", "MB", "GB", "TB")
 BAR_LENGTH = 14
@@ -101,6 +101,8 @@ class Application(tk.Tk):
         self.minsize(720, 480)
         self.configure(background=palette["background"], padx=24, pady=22)
         configure_styles(self, palette)
+        if palette is DARK:
+            darken_title_bar(self)
 
         self.folder = Path(folder or Path.home()).resolve()
         self.entries: list[Entry] = []
