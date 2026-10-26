@@ -8,11 +8,12 @@ import os
 import queue
 import threading
 import tkinter as tk
+from ctypes import wintypes
 from dataclasses import dataclass
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from .design import DARK, LIGHT, Button, Card, configure_styles, darken_title_bar, font, label, system_prefers_dark
+from .design import DARK, LIGHT, Button, Card, configure_styles, darken_title_bar, font, label, pixels, system_prefers_dark
 
 UNITS = ("B", "KB", "MB", "GB", "TB")
 BAR_LENGTH = 14
@@ -83,6 +84,29 @@ def scan(folder: str, cancelled: threading.Event | None = None):
             continue
 
 
+class _FileOperation(ctypes.Structure):
+    _fields_ = [
+        ("window", wintypes.HWND), ("function", wintypes.UINT), ("source", wintypes.LPCWSTR),
+        ("target", wintypes.LPCWSTR), ("flags", ctypes.c_ushort), ("aborted", wintypes.BOOL),
+        ("name_mappings", ctypes.c_void_p), ("progress_title", wintypes.LPCWSTR),
+    ]
+
+
+FO_DELETE = 3
+FOF_NOCONFIRMATION = 0x10
+FOF_ALLOWUNDO = 0x40
+FOF_WANTNUKEWARNING = 0x4000
+
+
+def move_to_recycle_bin(path: str) -> bool:
+    """Verschiebt `path` in den Papierkorb; passt er nicht hinein, fragt Windows vor endgültigem Löschen nach."""
+    # Die Quellliste muss doppelt nullterminiert sein.
+    operation = _FileOperation(
+        function=FO_DELETE, source=path + "\0", flags=FOF_NOCONFIRMATION | FOF_ALLOWUNDO | FOF_WANTNUKEWARNING
+    )
+    return ctypes.windll.shell32.SHFileOperationW(ctypes.byref(operation)) == 0 and not operation.aborted
+
+
 def share_bar(share: float) -> str:
     return "█" * round(share * BAR_LENGTH)
 
@@ -109,6 +133,7 @@ class Application(tk.Tk):
         self.messages: queue.Queue = queue.Queue()
         self.cancelled = threading.Event()
         self.sort_key, self.sort_descending = "size", True
+        self.scanning = False
 
         tk.Label(self, text="Ordnergrößen", font=font(20, "bold"), background=palette["background"], foreground=palette["text"]).pack(anchor="w")
         self.path_label = tk.Label(self, font=font(10), background=palette["background"], foreground=palette["muted"], anchor="w")
@@ -127,7 +152,7 @@ class Application(tk.Tk):
 
         card = Card(self, palette, "Inhalt")
         card.pack(fill="both", expand=True)
-        columns = ("name", "type", "size", "share")
+        columns = ("name", "type", "size", "share", "delete")
         self.tree = ttk.Treeview(card.body, columns=columns, show="headings", selectmode="browse")
         for column, heading, width, anchor in (
             ("name", "Name", 340, "w"),
@@ -137,12 +162,22 @@ class Application(tk.Tk):
         ):
             self.tree.heading(column, text=heading, anchor=anchor, command=lambda key=column: self.sort_by(key))
             self.tree.column(column, width=width, anchor=anchor, stretch=column == "name")
+        self.tree.column("delete", width=44, stretch=False)
         scrollbar = ttk.Scrollbar(card.body, orient="vertical", command=self.tree.yview)
-        self.tree.configure(yscrollcommand=scrollbar.set)
+
+        def scrolled(first, last):
+            scrollbar.set(first, last)
+            self.place_trash()
+
+        self.tree.configure(yscrollcommand=scrolled)
         self.tree.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="left", fill="y")
         self.tree.bind("<Double-1>", self.open_selected)
         self.tree.bind("<Return>", self.open_selected)
+        self.tree.bind("<Delete>", lambda event: self.delete_selected())
+        self.tree.bind("<<TreeviewSelect>>", lambda event: self.place_trash())
+        self.tree.bind("<Configure>", lambda event: self.after_idle(self.place_trash))
+        self.trash = self.trash_icon()
 
         self.status = tk.Label(self, font=font(10), background=palette["background"], foreground=palette["muted"], anchor="w")
         self.status.pack(fill="x", pady=(10, 0))
@@ -169,6 +204,63 @@ class Application(tk.Tk):
             self.folder = self.folder / entry.name
             self.reload()
 
+    def trash_icon(self) -> tk.Canvas:
+        palette = self.palette
+        size = pixels(self, 26)
+        icon = tk.Canvas(self.tree, width=size, height=size, highlightthickness=0, background=palette["hover"], cursor="hand2")
+
+        def paint(color: str) -> None:
+            icon.delete("all")
+            unit = size / 26
+            width = max(1, round(1.6 * unit))
+            icon.create_line(6 * unit, 8 * unit, 20 * unit, 8 * unit, fill=color, width=width, capstyle="round")
+            icon.create_line(10.5 * unit, 8 * unit, 11 * unit, 5.5 * unit, 15 * unit, 5.5 * unit, 15.5 * unit, 8 * unit,
+                             fill=color, width=width, joinstyle="round")
+            icon.create_line(8 * unit, 10 * unit, 9 * unit, 21 * unit, 17 * unit, 21 * unit, 18 * unit, 10 * unit,
+                             fill=color, width=width, joinstyle="round", capstyle="round")
+            for column in (11.5, 14.5):
+                icon.create_line(column * unit, 12 * unit, column * unit, 18.5 * unit, fill=color, width=width, capstyle="round")
+
+        paint(palette["muted"])
+        icon.bind("<Enter>", lambda event: paint(palette["danger"]))
+        icon.bind("<Leave>", lambda event: paint(palette["muted"]))
+        icon.bind("<Button-1>", lambda event: self.delete_selected())
+        return icon
+
+    def place_trash(self) -> None:
+        selection = self.tree.selection()
+        box = self.tree.bbox(selection[0], "delete") if selection else ""
+        if not box:
+            self.trash.place_forget()
+            return
+        left, top, width, height = box
+        self.trash.place(x=left + width / 2, y=top + height / 2, anchor="center")
+
+    def delete_selected(self) -> None:
+        selection = self.tree.selection()
+        if not selection:
+            return
+        entry = self.entries[int(selection[0])]
+        kind = "den Ordner" if entry.is_directory else "die Datei"
+        if not messagebox.askyesno(
+            "In den Papierkorb verschieben",
+            f"Soll {kind} „{entry.name}“ ({format_size(entry.size)}) in den Papierkorb verschoben werden?",
+            icon="warning", parent=self,
+        ):
+            return
+        if not move_to_recycle_bin(str(self.folder / entry.name)):
+            messagebox.showerror("Löschen fehlgeschlagen", f"„{entry.name}“ konnte nicht gelöscht werden.", parent=self)
+            return
+        self.tree.selection_set(())
+        self.entries.remove(entry)
+        self.render()
+        if not self.scanning:
+            self.show_total()
+
+    def show_total(self) -> None:
+        total = sum(entry.size for entry in self.entries)
+        self.status.configure(text=f"{len(self.entries)} Einträge · gesamt {format_size(total)}")
+
     def reload(self) -> None:
         self.cancelled.set()
         self.cancelled = threading.Event()
@@ -176,6 +268,7 @@ class Application(tk.Tk):
         self.render()
         self.path_label.configure(text=str(self.folder))
         self.status.configure(text="Wird eingelesen …")
+        self.scanning = True
         threading.Thread(target=self.work, args=(str(self.folder), self.cancelled), daemon=True).start()
 
     def work(self, folder: str, cancelled: threading.Event) -> None:
@@ -200,8 +293,8 @@ class Application(tk.Tk):
         if changed or finished:
             self.render()
         if finished:
-            total = sum(entry.size for entry in self.entries)
-            self.status.configure(text=f"{len(self.entries)} Einträge · gesamt {format_size(total)}")
+            self.scanning = False
+            self.show_total()
         self.after(150, self.poll)
 
     def sort_by(self, key: str) -> None:
@@ -219,6 +312,8 @@ class Application(tk.Tk):
         return sorted(range(len(self.entries)), key=keys[self.sort_key], reverse=self.sort_descending)
 
     def render(self) -> None:
+        selected = self.tree.selection()
+        selected_entry = self.entries[int(selected[0])] if selected and int(selected[0]) < len(self.entries) else None
         self.tree.delete(*self.tree.get_children())
         total = sum(entry.size for entry in self.entries) or 1
         for index in self.ordered():
@@ -229,6 +324,9 @@ class Application(tk.Tk):
                 values=(entry.name + ("/" if entry.is_directory else ""), "Ordner" if entry.is_directory else "Datei",
                         format_size(entry.size), f"{share * 100:5.1f} %  {share_bar(share)}".replace(".", ",")),
             )
+            if entry is selected_entry:
+                self.tree.selection_set(str(index))
+        self.place_trash()
 
     def export(self) -> None:
         target = filedialog.asksaveasfilename(

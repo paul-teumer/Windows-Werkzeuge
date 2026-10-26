@@ -31,6 +31,7 @@ pythonw ordnergroessen.pyw
 
 - Größen werden im Hintergrund ermittelt und erscheinen, sobald sie feststehen.
 - Sortierung per Klick auf die Spaltenköpfe; Doppelklick auf einen Ordner öffnet diesen.
+- Das Papierkorb-Symbol in der ausgewählten Zeile (oder die Entf-Taste) verschiebt den Eintrag nach Rückfrage in den Papierkorb.
 - Verknüpfungen und Junctions werden nicht verfolgt, nicht lesbare Pfade übersprungen.
 - Export der Ansicht als CSV (Semikolon, UTF-8 mit BOM, Größe in Bytes) für Excel.
 
